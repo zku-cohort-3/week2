@@ -37,5 +37,23 @@ template MerkleTreeInclusionProof(n) {
     signal output root; // note that this is an OUTPUT signal
 
     //[assignment] insert your code here to compute the root from a leaf and elements along the path
-    
+    signal hashes[n+1];
+    hashes[0] <== leaf;
+
+    component poseidon[n];
+
+    for(var i=0; i<n; i++){
+        poseidon[i] = Poseidon(2);
+        if(path_index[i] == 0){ // element is on the left
+            poseidon.inputs[0] <== path_elements[i];
+            poseidon.inputs[1] <== hashes[i];
+        } 
+        else{ // Element is on the right
+            poseidon.inputs[0] <== hashes[i];
+            poseidon.inputs[1] <== path_elements[i];
+        }
+        poseidon.out ==> hashes[i+1];
+    }
+
+    hashes[n] ==> root;
 }
