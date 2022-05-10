@@ -1,6 +1,8 @@
 pragma circom 2.0.0;
 
 include "../node_modules/circomlib/circuits/poseidon.circom";
+include "../node_modules/circomlib/circuits/mux1.circom";
+
 
 template CheckRoot(n) { // compute the root of a MerkleTree of n Levels 
     signal input leaves[2**n];
@@ -13,18 +15,18 @@ template CheckRoot(n) { // compute the root of a MerkleTree of n Levels
 
     signal merkle[MERKLE_size];
     component poseidon[MERKLE_size];
-    for(var i=0; i<(2**n)/2; ++i){
+    for(var i=0; i<(2**n)/2; i++){
         poseidon[i] = Poseidon(2);
         poseidon[i].inputs[0] <== leaves[i*2]; 
-        poseidon[i].inputs[1] <== leaves[i*2+1]
-        merkle[i] =  poseidon.out;
+        poseidon[i].inputs[1] <== leaves[i*2+1];
+        merkle[i] <==  poseidon[i].out;
     }
 
-    for(var i=(2**n)/2; i<(2**n)-1; ++i){
+    for(var i=(2**n)/2; i<(2**n)-1; i++){
         poseidon[i] = Poseidon(2);
         poseidon[i].inputs[0] <== merkle[(i-(2**n)/2)*2]; 
-        poseidon[i].inputs[1] <== merkle[i-(2**n)/2)*2+1]
-        merkle[i] =  poseidon.out;
+        poseidon[i].inputs[1] <== merkle[(i-(2**n)/2)*2+1];
+        merkle[i] <==  poseidon[i].out;
     }
 
     root <== merkle[ROOT_i];
@@ -41,18 +43,29 @@ template MerkleTreeInclusionProof(n) {
     hashes[0] <== leaf;
 
     component poseidon[n];
-
+    component mux[n];
     for(var i=0; i<n; i++){
+
         poseidon[i] = Poseidon(2);
-        if(path_index[i] == 0){ // element is on the left
-            poseidon.inputs[0] <== path_elements[i];
-            poseidon.inputs[1] <== hashes[i];
-        } 
-        else{ // Element is on the right
-            poseidon.inputs[0] <== hashes[i];
-            poseidon.inputs[1] <== path_elements[i];
-        }
-        poseidon.out ==> hashes[i+1];
+        
+        // if(path_index[i] == 0){ // element is on the left
+        //     poseidon[i].inputs[0] <== path_elements[i];
+        //     poseidon[i].inputs[1] <== hashes[i];
+        // } 
+        // else{ // Element is on the right
+        //     poseidon[i].inputs[0] <== hashes[i];
+        //     poseidon[i].inputs[1] <== path_elements[i];
+        // }
+        mux[i] = MultiMux1(2);
+        mux[i].c[0][0] <== path_elements[i];
+        mux[i].c[1][0] <== hashes[i];
+        mux[i].c[0][1] <== hashes[i];
+        mux[i].c[1][1] <== path_elements[i];
+        mux[i].s <== path_index[i];
+        poseidon[i].inputs[0] <== mux[i].out[0];
+        poseidon[i].inputs[1] <== mux[i].out[1];
+
+        poseidon[i].out ==> hashes[i+1];
     }
 
     hashes[n] ==> root;
