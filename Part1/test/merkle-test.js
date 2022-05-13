@@ -69,6 +69,8 @@ describe("MerkleTree", function () {
         const c = [argv[6], argv[7]];
         const input = argv.slice(8);
 
+        // console.log(input);
+
         expect(await merkleTree.verify(a, b, c, input)).to.be.true;
 
         // [bonus] verify the second leaf with the inclusion proof
