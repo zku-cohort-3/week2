@@ -30,7 +30,6 @@ contract MerkleTree is Verifier {
         require(index<2**depth, "Tree is full");
 
         hashes[index] = hashedLeaf;
-        ++index;
 
         uint base=0;
         uint nbase=0;
@@ -43,20 +42,21 @@ contract MerkleTree is Verifier {
             li = uint(level_index/2)*2;
             ri = li+1;
 
+
             // console.log(nbase);
             // console.log(level_index);
             // console.log(li);
             // console.log("************   ************");
-            hashes[nbase + level_index] = PoseidonT3.poseidon([hashes[base + li], hashes[base + ri]]);
             level_index /= 2;
+            hashes[nbase + level_index] = PoseidonT3.poseidon([hashes[base + li], hashes[base + ri]]);
             base = nbase;
         }
         ++index;
-
+        root = hashes[hashes.length-1];
         return hashes[(2**depth)*2-2];
     }
 
-    function verify(
+    function verify (
             uint[2] memory a,
             uint[2][2] memory b,
             uint[2] memory c,
@@ -64,7 +64,9 @@ contract MerkleTree is Verifier {
         ) public view returns (bool) {
 
         // [assignment] verify an inclusion proof and check that the proof root matches current root
-        if(/*verify(a,b,c,input) /*&& */input[0] == root){
+        console.log(input[0]);
+        console.log(root);
+        if(super.verifyProof(a,b,c,input) && input[0] == root){
             return true;
         }
         return false;
