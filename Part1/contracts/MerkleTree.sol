@@ -64,8 +64,8 @@ contract MerkleTree is Verifier {
         ) public view returns (bool) {
 
         // [assignment] verify an inclusion proof and check that the proof root matches current root
-        console.log(input[0]);
-        console.log(root);
+        // console.log(input[0]);
+        // console.log(root);
         if(super.verifyProof(a,b,c,input) && input[0] == root){
             return true;
         }
