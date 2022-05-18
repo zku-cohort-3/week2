@@ -61,7 +61,6 @@ describe("MerkleTree", function () {
         const editedPublicSignals = unstringifyBigInts(publicSignals);
         const editedProof = unstringifyBigInts(proof);
         const calldata = await groth16.exportSolidityCallData(editedProof, editedPublicSignals);
-    
         const argv = calldata.replace(/["[\]\s]/g, "").split(',').map(x => BigInt(x).toString());
     
         const a = [argv[0], argv[1]];
@@ -70,7 +69,33 @@ describe("MerkleTree", function () {
         const input = argv.slice(8);
 
         expect(await merkleTree.verify(a, b, c, input)).to.be.true;
+    });
 
-        // [bonus] verify the second leaf with the inclusion proof
+    it("Insert two new leaves and verify the second leaf in an inclusion proof", async function () {
+        await merkleTree.insertLeaf(1);
+        await merkleTree.insertLeaf(2);
+
+        const node9 = (await merkleTree.hashes(9)).toString();
+        const node13 = (await merkleTree.hashes(13)).toString();
+
+        const Input = {
+            "leaf": "2",
+            "path_elements": ["1", node9, node13],
+            "path_index": ["1", "0", "0"]
+        };
+        const { proof, publicSignals } = await groth16.fullProve(Input, "circuits/circuit_js/circuit.wasm","circuits/circuit_final.zkey");
+
+        const editedPublicSignals = unstringifyBigInts(publicSignals);
+        const editedProof = unstringifyBigInts(proof);
+        const calldata = await groth16.exportSolidityCallData(editedProof, editedPublicSignals);
+
+        const argv = calldata.replace(/["[\]\s]/g, "").split(',').map(x => BigInt(x).toString());
+
+        const a = [argv[0], argv[1]];
+        const b = [[argv[2], argv[3]], [argv[4], argv[5]]];
+        const c = [argv[6], argv[7]];
+        const input = argv.slice(8);
+
+        expect(await merkleTree.verify(a, b, c, input)).to.be.true;
     });
 });
