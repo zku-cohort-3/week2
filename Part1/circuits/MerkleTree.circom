@@ -1,9 +1,15 @@
 pragma circom 2.0.0;
 
-include "../node_modules/circomlib/circuits/Poseidon.circom";
+include "../node_modules/circomlib/circuits/poseidon.circom";
 
-// compute the root of a MerkleTree of n Levels
-template CheckRoot(n) {
+/*
+    Gets the Merkle hash root of a Merkle tree of 'n' levels deep. The given level is logarithmic to the number of leaves,
+    as each increment in level will double in # of nodes. The root is at level 0. A tree with 3 levels would have 8 leaves.
+    @param n - The number of levels of the given Merkle tree to compute against
+    @input leaves[2**n] - The array of leaf nodes to compute for, values hashed.
+    @output root - The hash of the Merkle root representing the given leaves.
+*/
+template CheckRoot(n) { // compute the root of a MerkleTree of n Levels
     signal input leaves[2**n]; // 3 levels would be 8 leaves; all leaves are expected to be provided and hashed already
     signal output root;
 
